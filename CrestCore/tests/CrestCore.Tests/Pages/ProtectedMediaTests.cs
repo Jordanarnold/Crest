@@ -85,6 +85,33 @@ public sealed partial class BrowserContractsTests {
     }
 
     [Fact]
+    public void AcceptingAnOfferDuringAPendingNavigationTakesItAndLeavesTheNavigationAlone() {
+        var (app, chromium, chromiumBinding, _, webKitBinding, page, _, _, _, _) = ChromiumPage();
+        using var disposal = app;
+        app.Send(new ChooseProtectedMediaFallback(ProtectedMediaFallback.Ask));
+        app.Report(chromium, new ProtectedMediaUnavailable(page, KeySystem.Widevine));
+        app.Send(new Navigate(page, "https://example.org/next"));
+        app.Drain();
+        int commands = chromiumBinding.Commands.Count;
+
+        var accepted = app.Send(new AcceptProtectedMediaOffer(page));
+
+        var changed = Assert.Single(accepted.OfType<PageChanged>()).Page;
+        Assert.Null(changed.Live.ProtectedMediaOffer);
+        Assert.Equal("https://example.org/next", changed.Live.PendingUrl);
+        Assert.Empty(accepted.OfType<PageRehosted>());
+        Assert.Equal(commands, chromiumBinding.Commands.Count);
+        Assert.Empty(webKitBinding.Commands);
+
+        // The navigation proceeds, and its document can offer again.
+        app.Report(chromium, new NavigationCommitted(page, "https://example.org/next", SameDocument: false));
+        app.Report(chromium, new PageStateChanged(page, Showing("https://example.org/next")));
+        app.Drain();
+        app.Report(chromium, new ProtectedMediaUnavailable(page, KeySystem.Widevine));
+        Assert.Equal(EngineKind.WebKit, Assert.Single(app.Drain().OfType<PageChanged>()).Page.Live.ProtectedMediaOffer);
+    }
+
+    [Fact]
     public void ChoosingNeverWithdrawsAnOpenOffer() {
         var (app, chromium, chromiumBinding, _, webKitBinding, page, _, _, _, _) = ChromiumPage();
         using var disposal = app;

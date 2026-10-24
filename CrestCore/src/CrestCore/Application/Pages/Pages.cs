@@ -184,10 +184,12 @@ internal sealed class Pages(Device device, Engines engines, IClock clock, IIdSou
     /// play: the engine that plays it and the address of the document that
     /// asked. Null for a page that is not live or shown, one that moved for
     /// protected media before, one whose site the person chose an engine for,
-    /// one without a web address, while a close is underway, or when no other
+    /// one without a web address, while a navigation is pending, because the
+    /// move would replace it, while a close is underway, or when no other
     /// engine plays protected media.
     internal (Engine Engine, string Address)? ProtectedMediaFallback(Page page, PageTurn turn) =>
-        page.Phase == PagePhase.Live && Shown(page) is { } space && !page.MovedFor(RehostReason.ProtectedMedia)
+        page.Phase == PagePhase.Live && page.Live.PendingUrl is null && Shown(page) is { } space
+            && !page.MovedFor(RehostReason.ProtectedMedia)
             && engines.PlayingProtectedMedia(page.Engine) is { } fallback
             && page.DocumentAddress is { } address && new WebAddress(address).Origin is { } origin
             && device.ChosenEngine(space.Id, origin) is null && turn.Closing.Underway is null
