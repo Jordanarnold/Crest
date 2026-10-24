@@ -4389,6 +4389,10 @@
     "smooth-appearance-previews": {
       "category": "fixed",
       "message": "Dragging an Appearance setting, such as the window border, material, Space icon size or the tab and address field colors, no longer slows the whole app down."
+    },
+    "protected-video-webkit-switch-choice": {
+      "category": "new",
+      "message": "Choose whether Crest switches to WebKit for protected video automatically, asks first, or never."
     }
   }
 }
