@@ -4393,6 +4393,10 @@
     "protected-video-webkit-switch-choice": {
       "category": "new",
       "message": "Choose whether Crest switches to WebKit for protected video automatically, asks first, or never."
+    },
+    "engines-search-terms-catalog-key": {
+      "category": "internal",
+      "message": "The Engines settings search terms match their string catalog entry."
     }
   }
 }
