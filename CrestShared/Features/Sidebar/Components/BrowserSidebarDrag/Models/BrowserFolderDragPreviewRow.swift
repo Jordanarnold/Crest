@@ -19,9 +19,11 @@ struct BrowserFolderDragPreviewRow: Identifiable {
 
     /// The height the row takes in the lifted folder's art: a folder header's
     /// own, and any other row its measured one.
+    @MainActor
     var previewHeight: CGFloat {
         switch content {
-        case .folder: BrowserFolderDragPreviewLayout.height
+        case .folder:
+            BrowserFolderDragPreviewLayout.headerHeight(spacing: BrowserDeviceAppearanceStore.shared.foldersSpacing)
         case .tab, .splitGroup: frame.height
         }
     }

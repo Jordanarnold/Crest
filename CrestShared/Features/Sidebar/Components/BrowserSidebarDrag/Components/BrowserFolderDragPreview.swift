@@ -12,17 +12,22 @@ struct BrowserFolderDragPreview: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: BrowserSidebarMetrics.layerCornerRadius(), style: .continuous)
         let width = BrowserFolderDragPreviewLayout.width(for: rowWidth)
+        // A folder the spacing setting packs tighter than a row lifts at its
+        // own height, so the art stays the size of what it was lifted from.
+        let height = max(BrowserSidebarMetrics.compactFolderHeaderHeight, sourceHeight)
 
         ZStack(alignment: .topLeading) {
             folderHeader(folder)
-                .frame(height: BrowserFolderDragPreviewLayout.height)
+                .frame(
+                    height: BrowserFolderDragPreviewLayout.headerHeight(
+                        spacing: BrowserDeviceAppearanceStore.shared.foldersSpacing))
             ForEach(rows) { row in
                 rowContent(row)
                     .frame(width: width, height: row.previewHeight, alignment: .topLeading)
                     .offset(y: row.frame.minY)
             }
         }
-        .frame(width: width, height: max(BrowserFolderDragPreviewLayout.height, sourceHeight), alignment: .topLeading)
+        .frame(width: width, height: height, alignment: .topLeading)
         .background { CrestSurfaceLayer(shape: shape) }
         .overlay {
             shape.fill(folder.displayColor.color.opacity(0.12))

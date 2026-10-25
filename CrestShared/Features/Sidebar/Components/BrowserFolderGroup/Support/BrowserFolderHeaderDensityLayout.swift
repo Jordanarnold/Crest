@@ -16,8 +16,14 @@ private struct BrowserFolderHeaderDensityLayout: ViewModifier {
 
     func body(content: Content) -> some View {
         let metrics = configuration.headerMetrics
-        let height = BrowserSidebarDensity(dynamicTypeSize.isAccessibilitySize ? max(1, tabScale) : tabScale).rowHeight(
-            base: CrestLayout.sidebarRowHeight, touch: !metrics.usesFixedRowHeight)
+        let density = BrowserSidebarDensity(dynamicTypeSize.isAccessibilitySize ? max(1, tabScale) : tabScale)
+        let touch = !metrics.usesFixedRowHeight
+        // The folder spacing setting may trim the row's slack above and below
+        // the title, never below the smallest target a row keeps.
+        let height = max(
+            density.rowHeight(base: BrowserSidebarMetrics.compactFolderHeaderHeight, touch: touch),
+            density.rowHeight(base: CrestLayout.sidebarRowHeight, touch: touch)
+                - 2 * BrowserSidebarMetrics.folderHeaderTrim(BrowserDeviceAppearanceStore.shared.foldersSpacing))
         content.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, configuration.headerLeadingInset)
             .padding(.trailing, metrics.contentTrailingInset)
