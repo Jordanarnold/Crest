@@ -12,15 +12,15 @@ struct BrowserFolderDragPreview: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: BrowserSidebarMetrics.layerCornerRadius(), style: .continuous)
         let width = BrowserFolderDragPreviewLayout.width(for: rowWidth)
-        // A folder the spacing setting packs tighter than a row lifts at its
-        // own height, so the art stays the size of what it was lifted from.
-        let height = max(BrowserSidebarMetrics.compactFolderHeaderHeight, sourceHeight)
+        // The header is as tall as the spacing setting leaves the folder's own,
+        // and the lifted art is never shorter than that header.
+        let headerHeight = BrowserFolderDragPreviewLayout.headerHeight(
+            spacing: BrowserDeviceAppearanceStore.shared.foldersSpacing)
+        let height = max(headerHeight, sourceHeight)
 
         ZStack(alignment: .topLeading) {
             folderHeader(folder)
-                .frame(
-                    height: BrowserFolderDragPreviewLayout.headerHeight(
-                        spacing: BrowserDeviceAppearanceStore.shared.foldersSpacing))
+                .frame(height: headerHeight)
             ForEach(rows) { row in
                 rowContent(row)
                     .frame(width: width, height: row.previewHeight, alignment: .topLeading)

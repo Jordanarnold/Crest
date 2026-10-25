@@ -4545,6 +4545,10 @@
     "sidebar-folder-spacing-setting": {
       "category": "new",
       "message": "Folder spacing in Appearance under Tabs and pins can now be set to Compact, which packs sidebar folders closer together so more fits without scrolling."
+    },
+    "lifted-folder-keeps-header-height": {
+      "category": "internal",
+      "message": "A lifted folder's drag preview is never shorter than the folder header it draws."
     }
   }
 }
