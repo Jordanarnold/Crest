@@ -22,9 +22,6 @@ struct BrowserQuickWindowSourceSpaceIndicator: View {
                 }
                 Text(space?.name ?? "Space")
                     .lineLimit(1)
-                Image(systemName: "chevron.down")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
             }
             .font(.callout.weight(.semibold))
             .padding(

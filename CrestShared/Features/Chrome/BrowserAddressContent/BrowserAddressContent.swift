@@ -47,7 +47,13 @@ struct BrowserAddressContent: View {
         } action: {
             fieldImbalance = $0
         }
-        .onGeometryChange(for: CGFloat.self, of: \.size.width) { width = $0 }
+        // Only an address that centers in a field measures itself; the others
+        // keep their layout free of width and text-width state.
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            centeringField == nil ? 0 : proxy.size.width
+        } action: {
+            width = $0
+        }
         .onChange(of: isFocused, initial: true) { _, focused in
             if focused { selectAllOnceFocused() }
             guard isEditing != focused else { return }
@@ -185,20 +191,25 @@ struct BrowserAddressContent: View {
     /// text, measured from `label`, sits at the center of the field rather
     /// than of the space between the controls. Text too wide for that keeps
     /// the room it needs.
+    @ViewBuilder
     private func centeredInField(
         _ content: some View,
         measuring label: some View
     ) -> some View {
-        content
-            .padding(.leading, max(0, -centeringOffset))
-            .padding(.trailing, max(0, centeringOffset))
-            .background {
-                label
-                    .fixedSize()
-                    .hidden()
-                    .accessibilityHidden(true)
-                    .onGeometryChange(for: CGFloat.self, of: \.size.width) { textWidth = $0 }
-            }
+        if centeringField == nil {
+            content
+        } else {
+            content
+                .padding(.leading, max(0, -centeringOffset))
+                .padding(.trailing, max(0, centeringOffset))
+                .background {
+                    label
+                        .fixedSize()
+                        .hidden()
+                        .accessibilityHidden(true)
+                        .onGeometryChange(for: CGFloat.self, of: \.size.width) { textWidth = $0 }
+                }
+        }
     }
 
     /// The padding that centers the text in the field: positive on the
