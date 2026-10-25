@@ -13,7 +13,7 @@ final class BrowserNativeWindowInputTests: XCTestCase {
         let page = NSView(frame: NSRect(x: 260, y: 0, width: 640, height: 600))
         content.addSubview(page)
         window.layoutIfNeeded()
-        let tracker = BrowserPageTitleBarTracker(page: page)
+        let tracker = BrowserTitleBarPointerTracker(view: page, region: .page)
         let titleBarBottom = window.contentLayoutRect.maxY
         XCTAssertLessThan(titleBarBottom, content.bounds.maxY)
 
@@ -40,22 +40,24 @@ final class BrowserNativeWindowInputTests: XCTestCase {
         content.addSubview(BrowserNativeWindowControlsHostView())
         window.layoutIfNeeded()
         let top = content.bounds.maxY
-        let field = BrowserWindowTitleBarControlAreaView(frame: NSRect(x: 100, y: top - 46, width: 400, height: 36))
-        let lowerField = BrowserWindowTitleBarControlAreaView(frame: NSRect(x: 100, y: 200, width: 400, height: 36))
+        let field = NSView(frame: NSRect(x: 100, y: top - 46, width: 400, height: 36))
+        let lowerField = NSView(frame: NSRect(x: 100, y: 200, width: 400, height: 36))
         content.addSubview(field)
         content.addSubview(lowerField)
+        let tracker = BrowserTitleBarPointerTracker(view: field, region: .control)
+        let lowerTracker = BrowserTitleBarPointerTracker(view: lowerField, region: .control)
         XCTAssertLessThan(window.contentLayoutRect.maxY, top - 10)
 
         // A press on the field under the title bar reaches the field, so a
         // drag across its text selects it rather than moving the window.
-        field.mouseEntered(with: try pointer(at: NSPoint(x: 300, y: top - 28), in: window))
+        tracker.mouseEntered(with: try pointer(at: NSPoint(x: 300, y: top - 28), in: window))
         XCTAssertFalse(window.isMovable)
 
         // Off the field, or on a control below the title bar, the window
         // moves as any window does.
-        field.mouseExited(with: try pointer(at: NSPoint(x: 700, y: top - 28), in: window))
+        tracker.mouseExited(with: try pointer(at: NSPoint(x: 700, y: top - 28), in: window))
         XCTAssertTrue(window.isMovable)
-        lowerField.mouseEntered(with: try pointer(at: NSPoint(x: 300, y: 218), in: window))
+        lowerTracker.mouseEntered(with: try pointer(at: NSPoint(x: 300, y: 218), in: window))
         XCTAssertTrue(window.isMovable)
     }
 
