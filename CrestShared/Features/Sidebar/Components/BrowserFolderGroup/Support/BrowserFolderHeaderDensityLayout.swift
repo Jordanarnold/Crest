@@ -12,18 +12,11 @@ extension View {
 private struct BrowserFolderHeaderDensityLayout: ViewModifier {
     let configuration: BrowserFolderGroupConfiguration
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    private var tabScale: Double { BrowserDeviceAppearanceStore.shared.tabScale }
 
     func body(content: Content) -> some View {
         let metrics = configuration.headerMetrics
-        let density = BrowserSidebarDensity(dynamicTypeSize.isAccessibilitySize ? max(1, tabScale) : tabScale)
-        let touch = !metrics.usesFixedRowHeight
-        // The folder spacing setting may trim the row's slack above and below
-        // the title, never below the smallest target a row keeps.
-        let height = max(
-            density.rowHeight(base: BrowserSidebarMetrics.compactFolderHeaderHeight, touch: touch),
-            density.rowHeight(base: CrestLayout.sidebarRowHeight, touch: touch)
-                - 2 * BrowserSidebarMetrics.folderHeaderTrim(BrowserDeviceAppearanceStore.shared.foldersSpacing))
+        let height = BrowserSidebarMetrics.folderHeaderHeight(
+            touch: !metrics.usesFixedRowHeight, isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
         content.frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, configuration.headerLeadingInset)
             .padding(.trailing, metrics.contentTrailingInset)

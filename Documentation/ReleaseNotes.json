@@ -4549,6 +4549,10 @@
     "lifted-folder-keeps-header-height": {
       "category": "internal",
       "message": "A lifted folder's drag preview is never shorter than the folder header it draws."
+    },
+    "lifted-folder-header-follows-tab-scale": {
+      "category": "internal",
+      "message": "A lifted folder's drag preview draws its headers at the same height as the sidebar's, following tab scale, touch targets and folder spacing."
     }
   }
 }

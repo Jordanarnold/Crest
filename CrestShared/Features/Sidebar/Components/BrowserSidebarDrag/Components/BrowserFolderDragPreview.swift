@@ -8,22 +8,28 @@ struct BrowserFolderDragPreview: View {
     var rows: [BrowserFolderDragPreviewRow] = []
     var profileID: UUID?
     var loadedTabIDs: Set<UUID>?
+    /// Whether the folder was lifted from a touch shell, whose headers keep
+    /// touch-sized targets.
+    var touch = false
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: BrowserSidebarMetrics.layerCornerRadius(), style: .continuous)
         let width = BrowserFolderDragPreviewLayout.width(for: rowWidth)
-        // The header is as tall as the spacing setting leaves the folder's own,
-        // and the lifted art is never shorter than that header.
-        let headerHeight = BrowserFolderDragPreviewLayout.headerHeight(
-            spacing: BrowserDeviceAppearanceStore.shared.foldersSpacing)
+        // Headers are as tall as the ones they were lifted from, and the art is
+        // never shorter than its own header.
+        let headerHeight = BrowserSidebarMetrics.folderHeaderHeight(
+            touch: touch, isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
         let height = max(headerHeight, sourceHeight)
 
         ZStack(alignment: .topLeading) {
             folderHeader(folder)
                 .frame(height: headerHeight)
             ForEach(rows) { row in
+                let rowHeight = row.previewHeight(folderHeaderHeight: headerHeight)
                 rowContent(row)
-                    .frame(width: width, height: row.previewHeight, alignment: .topLeading)
+                    .frame(width: width, height: rowHeight, alignment: .topLeading)
                     .offset(y: row.frame.minY)
             }
         }

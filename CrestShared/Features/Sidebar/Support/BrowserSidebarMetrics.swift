@@ -75,6 +75,21 @@ enum BrowserSidebarMetrics {
         max(0, folderTightening(setting) - containerSpacing - containerPadding)
     }
 
+    /// The height of a folder header, the one place both the header and the
+    /// drag previews lifted from it take it from: a row at the device's tab
+    /// scale on a pointer or `touch` shell, less what the folder spacing
+    /// setting trims, never below the smallest target a row keeps. Accessible
+    /// text sizes never draw it smaller than the default scale.
+    @MainActor
+    static func folderHeaderHeight(touch: Bool, isAccessibilitySize: Bool = false) -> CGFloat {
+        let appearance = BrowserDeviceAppearanceStore.shared
+        let density = BrowserSidebarDensity(isAccessibilitySize ? max(1, appearance.tabScale) : appearance.tabScale)
+        return max(
+            density.rowHeight(base: compactFolderHeaderHeight, touch: touch),
+            density.rowHeight(base: CrestLayout.sidebarRowHeight, touch: touch)
+                - 2 * folderHeaderTrim(appearance.foldersSpacing))
+    }
+
     /// The points the setting takes from each side of a folder; none for the
     /// usual spacing or a value that is not a number.
     private static func folderTightening(_ setting: Double) -> CGFloat {
