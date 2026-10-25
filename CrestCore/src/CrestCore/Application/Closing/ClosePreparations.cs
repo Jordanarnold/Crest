@@ -80,16 +80,18 @@ internal sealed class ClosePreparations(Device device, Pages pages, Downloads do
 
     /// Moving engines discards the old document. Its normal before-unload
     /// decision must finish first, and a canceled or stale move changes no
-    /// site preference. A page that moved, closed or lost access while the
-    /// question was open never moves from this answer.
+    /// site preference. A page that moved, closed, lost access or was sent
+    /// to another address while the question was open never moves from this
+    /// answer, because the move would replace that navigation.
     internal void Move(Page page, Engine engine, string? address, RehostReason reason, bool remembersSite, PageTurn turn) {
         var previous = page.Engine;
         long document = page.Documents;
+        var pending = page.Live.PendingUrl;
         var origin = address is null ? null : new WebAddress(address).Origin;
         var siteEngine = origin is null ? null : device.ChosenEngine(page.SpaceId, origin);
         Start(ids.Next(), quits: false, [page.Id], turn.Changes, turn.Issue, (allowed, changes) => {
             if (!allowed || !ReferenceEquals(pages.Hosted(page.Id), page) || !ReferenceEquals(page.Engine, previous)
-                || page.Documents != document || pages.Shown(page) is null)
+                || page.Documents != document || page.Live.PendingUrl != pending || pages.Shown(page) is null)
                 return;
             if (remembersSite && origin is not null) {
                 if (device.ChosenEngine(page.SpaceId, origin) != siteEngine) return;

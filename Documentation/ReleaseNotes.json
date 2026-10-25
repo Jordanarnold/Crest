@@ -4401,6 +4401,10 @@
     "protected-video-offer-pending-navigation": {
       "category": "internal",
       "message": "Accepting the WebKit offer for protected video while another page is loading no longer cancels that page."
+    },
+    "protected-video-move-pending-navigation": {
+      "category": "internal",
+      "message": "Opening another page while Crest checks whether a page may leave for WebKit no longer lets the switch cancel that page."
     }
   }
 }

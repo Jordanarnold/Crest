@@ -277,6 +277,26 @@ public sealed partial class BrowserContractsTests {
     }
 
     [Fact]
+    public void AnAutomaticMoveCannotReplaceANavigationStartedDuringBeforeUnload() {
+        var (app, chromium, binding, _, fallback, page, workspace, _, space, tab) = ChromiumPage();
+        using var disposal = app;
+        app.Report(chromium, new ProtectedMediaUnavailable(page, KeySystem.Widevine));
+        app.Send(new Navigate(page, "https://example.org/next"));
+        app.Drain();
+        int commands = binding.Commands.Count;
+
+        app.Report(chromium, new BeforeUnloadAnswered(page, Proceeds: true));
+
+        Assert.Empty(app.Drain().OfType<PageRehosted>());
+        Assert.Equal(commands, binding.Commands.Count);
+        Assert.Empty(fallback.Commands);
+
+        // The site keeps no engine choice from the move that never happened.
+        app.Send(new Navigate(page, TabUrl(app, workspace, space, tab)));
+        Assert.Empty(fallback.Commands);
+    }
+
+    [Fact]
     public void AnAutomaticMoveCannotOverrideASiteChoiceMadeDuringBeforeUnload() {
         var (app, chromium, _, _, fallback, page, workspace, _, space, tab) = ChromiumPage();
         using var disposal = app;
