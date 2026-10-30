@@ -10,6 +10,8 @@ struct BrowserCommandPalette: View {
     let morphNamespace: Namespace.ID?
     let overlayContentLeadingInset: CGFloat
     let overlayContentInsets: EdgeInsets?
+    /// Hears what the person types, as it changes.
+    let queryChanged: ((String) -> Void)?
 
     @State private var model: BrowserCommandPaletteModel
 
@@ -18,6 +20,7 @@ struct BrowserCommandPalette: View {
         space: SpaceModel?,
         selectedTabID: UUID?,
         initialQuery: String = "",
+        typesAfterInitialQuery: Bool = false,
         commands: BrowserCommandPaletteCommandRegistry? = nil,
         offersRestingCommands: Bool = true,
         isSourceAvailable: @escaping (BrowserTabRuntimeAssignment) -> Bool,
@@ -28,6 +31,7 @@ struct BrowserCommandPalette: View {
             ) -> Bool,
         openURL: @escaping (BrowserTabRuntimeAssignment, URL, BrowserCommandPaletteOpening) -> Bool,
         dismiss: @escaping () -> Void,
+        queryChanged: ((String) -> Void)? = nil,
         presentation: BrowserCommandPalettePresentation = .overlay,
         morphNamespace: Namespace.ID? = nil,
         overlayContentLeadingInset: CGFloat = 0,
@@ -40,12 +44,14 @@ struct BrowserCommandPalette: View {
         self.morphNamespace = morphNamespace
         self.overlayContentLeadingInset = overlayContentLeadingInset
         self.overlayContentInsets = overlayContentInsets
+        self.queryChanged = queryChanged
         _model = State(
             initialValue: BrowserCommandPaletteModel(
                 browser: browser,
                 space: space,
                 selectedTabID: selectedTabID,
                 initialQuery: initialQuery,
+                typesAfterInitialQuery: typesAfterInitialQuery,
                 commands: commands,
                 offersRestingCommands: offersRestingCommands,
                 isSourceAvailable: isSourceAvailable,
@@ -66,6 +72,7 @@ struct BrowserCommandPalette: View {
             overlayContentLeadingInset: overlayContentLeadingInset,
             overlayContentInsets: overlayContentInsets
         )
+        .onChange(of: model.query) { _, query in queryChanged?(query) }
         .onChange(of: model.isCompletionSourceAvailable) { _, available in
             if !available { model.invalidateURLCompletion() }
         }

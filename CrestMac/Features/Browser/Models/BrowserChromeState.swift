@@ -33,6 +33,10 @@ final class BrowserChromeState {
         set { publish(newValue, into: \.commandPaletteModeStorage, as: \.commandPaletteMode) }
     }
     @ObservationIgnored private var commandPaletteModeStorage: BrowserCommandPaletteMode?
+    /// What the person has typed into the open new-tab palette. A palette
+    /// opened again for another Space starts from it, so the text follows
+    /// them there.
+    @ObservationIgnored private(set) var newTabQuery = ""
     private(set) var addressFocusRequest = 0
     private(set) var startPageFocusRequest = 0
     private(set) var notice: BrowserNotice?
@@ -116,11 +120,33 @@ final class BrowserChromeState {
     // MARK: - Actions - Command Palette
 
     func openLocation(_ address: String = "") {
+        newTabQuery = ""
         commandPaletteMode = .editLocation(address)
     }
 
     func presentCommandPalette() {
+        newTabQuery = ""
         commandPaletteMode = .newTab
+    }
+
+    /// What the palette opens with: what was typed into the new-tab palette
+    /// so far, or the address an edited tab shows.
+    func commandPaletteQuery(for mode: BrowserCommandPaletteMode) -> String {
+        mode == .newTab ? newTabQuery : mode.initialQuery
+    }
+
+    /// Notes what the person typed while the new-tab palette is open.
+    func recordCommandPaletteQuery(_ query: String) {
+        guard commandPaletteMode == .newTab else { return }
+        newTabQuery = query
+    }
+
+    /// The window moved to another Space. A new tab can open there just as
+    /// well, so its palette stays open with what was typed; editing an
+    /// address belongs to the tab left behind, so that palette closes.
+    func spaceChanged() {
+        guard case .editLocation = commandPaletteMode else { return }
+        dismissCommandPalette()
     }
 
     func openNewTab(isStartPageSelected: Bool) {
@@ -133,11 +159,12 @@ final class BrowserChromeState {
             presentCommandPalette()
             return
         }
-        commandPaletteMode = nil
+        dismissCommandPalette()
         startPageFocusRequest &+= 1
     }
 
     func dismissCommandPalette() {
+        newTabQuery = ""
         commandPaletteMode = nil
     }
 

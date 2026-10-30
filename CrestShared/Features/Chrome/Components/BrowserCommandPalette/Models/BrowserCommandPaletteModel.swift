@@ -76,6 +76,10 @@ final class BrowserCommandPaletteModel {
     /// What the field held when the palette opened: nothing for a new tab, or
     /// the address of the page the window shows.
     @ObservationIgnored private let openedWith: String
+    /// Whether the field opens with its caret after what it holds, so the
+    /// person types on, as with text carried from another Space, rather
+    /// than with it selected to type over, as with a tab's address.
+    @ObservationIgnored let typesAfterInitialQuery: Bool
 
     private let suggestionDebounce: Duration
     private let fetchSuggestions: @Sendable (URL) async throws -> [String]
@@ -158,6 +162,7 @@ final class BrowserCommandPaletteModel {
         space: SpaceModel?,
         selectedTabID: UUID?,
         initialQuery: String,
+        typesAfterInitialQuery: Bool = false,
         commands: BrowserCommandPaletteCommandRegistry?,
         offersRestingCommands: Bool = true,
         suggestionDebounce: Duration = .milliseconds(250),
@@ -186,7 +191,10 @@ final class BrowserCommandPaletteModel {
         dismissAction = dismiss
         self.emptySelectionActions = emptySelectionActions
         self.openings = openings
-        openedWith = initialQuery
+        // Text carried into a new tab is what was typed, not an address the
+        // pasteboard could stand in for.
+        openedWith = typesAfterInitialQuery ? "" : initialQuery
+        self.typesAfterInitialQuery = typesAfterInitialQuery
         pasteboard = BrowserAppPreferenceStore.shared.preferences.palette.offers(.pasteAndGo) ? readPasteboard() : nil
         // The palette opens with its rows: the resting answer is quick to
         // rank, so it is asked for on the main thread.
