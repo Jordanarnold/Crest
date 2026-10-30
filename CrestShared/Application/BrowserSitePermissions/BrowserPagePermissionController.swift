@@ -16,17 +16,34 @@ final class BrowserPagePermissionController {
 
     private(set) var current: Request?
     private(set) var generation = UUID()
-    @ObservationIgnored private var isPresentationAvailable = false
+    /// The views that can show this page's requests, each by its own token.
+    /// A page moving between windows gains its new host before or after its
+    /// old one leaves, so only the last host leaving ends its requests.
+    @ObservationIgnored private var hosts: Set<UUID> = []
     @ObservationIgnored private var requests: [Request] = []
     /// Who waits on each request, each by its own token, so one that no
     /// longer waits can leave without answering the others.
     @ObservationIgnored private var completions:
         [UUID: [(token: UUID, callback: (BrowserSitePermissionPromptResponse?) -> Void)]] = [:]
 
-    func setPresentationAvailable(_ available: Bool) {
-        isPresentationAvailable = available
-        if !available { cancelAll() }
+    // MARK: - Actions - Presentation
+
+    func attachHost(_ host: UUID) {
+        hosts.insert(host)
     }
+
+    func detachHost(_ host: UUID) {
+        guard hosts.remove(host) != nil, hosts.isEmpty else { return }
+        cancelAll()
+    }
+
+    /// The page is going away: no host can show its requests any more.
+    func endPresentation() {
+        hosts.removeAll()
+        cancelAll()
+    }
+
+    // MARK: - Actions - Requests
 
     func request(
         _ permission: SitePermission,
@@ -36,7 +53,7 @@ final class BrowserPagePermissionController {
         dismissal: BrowserPromptDismissal? = nil,
         completion: @escaping (BrowserSitePermissionPromptResponse?) -> Void
     ) {
-        guard isPresentationAvailable else {
+        guard !hosts.isEmpty else {
             completion(nil)
             return
         }
