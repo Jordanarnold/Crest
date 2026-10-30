@@ -80,6 +80,12 @@ final class BrowserCommandPaletteCompletionTests: XCTestCase {
         XCTAssertEqual(model.urlCompletion?.suffix, "th/")
         type("example.com/PaT")
         XCTAssertNil(model.urlCompletion)
+
+        // The path matches code unit by code unit, so a decomposed é never
+        // continues a precomposed one.
+        let accented = AddressCompletion(typed: "example.com/", suffix: "\u{E9}/", accepted: "example.com/\u{E9}/")
+        XCTAssertNil(accented.continued(to: "example.com/e\u{301}"))
+        XCTAssertEqual(accented.continued(to: "example.com/\u{E9}")?.suffix, "/")
     }
 
     private func makeSpace(_ tab: TabState.Seed) -> SpaceState.Seed {

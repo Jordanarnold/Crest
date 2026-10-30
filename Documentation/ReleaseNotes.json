@@ -4597,6 +4597,10 @@
     "kept-address-completion-path-case": {
       "category": "internal",
       "message": "Kept address completions match a URL's path case exactly."
+    },
+    "kept-address-completion-path-code-units": {
+      "category": "internal",
+      "message": "Kept address completions match a URL's path code unit by code unit, as the core does."
     }
   }
 }
