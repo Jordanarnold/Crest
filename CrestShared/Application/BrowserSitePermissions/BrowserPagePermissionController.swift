@@ -20,6 +20,9 @@ final class BrowserPagePermissionController {
     /// A page moving between windows gains its new host before or after its
     /// old one leaves, so only the last host leaving ends its requests.
     @ObservationIgnored private var hosts: Set<UUID> = []
+    /// The last host's departure, which ends the requests on the next main
+    /// turn unless a host arrives first; a newer departure replaces it.
+    @ObservationIgnored private var pendingDeparture: UUID?
     @ObservationIgnored private var requests: [Request] = []
     /// Who waits on each request, each by its own token, so one that no
     /// longer waits can leave without answering the others.
@@ -30,16 +33,29 @@ final class BrowserPagePermissionController {
 
     func attachHost(_ host: UUID) {
         hosts.insert(host)
+        pendingDeparture = nil
     }
 
+    /// The old window's host can leave before the new one arrives, so the
+    /// last host leaving ends the requests only if no host has arrived by
+    /// the next main turn.
     func detachHost(_ host: UUID) {
         guard hosts.remove(host) != nil, hosts.isEmpty else { return }
-        cancelAll()
+        let departure = UUID()
+        pendingDeparture = departure
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.pendingDeparture == departure, self.hosts.isEmpty else { return }
+                self.pendingDeparture = nil
+                self.cancelAll()
+            }
+        }
     }
 
     /// The page is going away: no host can show its requests any more.
     func endPresentation() {
         hosts.removeAll()
+        pendingDeparture = nil
         cancelAll()
     }
 

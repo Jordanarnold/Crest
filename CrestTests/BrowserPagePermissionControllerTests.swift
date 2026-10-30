@@ -69,9 +69,37 @@ final class BrowserPagePermissionControllerTests: XCTestCase {
         XCTAssertEqual(answers.count, 1)
 
         controller.detachHost(mainWindow)
+        drainMainQueue()
         XCTAssertNil(controller.current)
         XCTAssertEqual(answers.count, 2)
         XCTAssertNil(answers[1])
+    }
+
+    /// The Quick Window's host can leave before the main window's arrives;
+    /// a host arriving within the same main turn keeps the request.
+    func testRequestSurvivesTheOldHostLeavingBeforeTheNewOneAttached() {
+        let controller = BrowserPagePermissionController()
+        let origin = SiteOrigin(scheme: "https", host: "meet.example", port: 443)
+        let quickWindow = UUID()
+        let mainWindow = UUID()
+        var answers: [BrowserSitePermissionPromptResponse?] = []
+
+        controller.attachHost(quickWindow)
+        controller.request(.camera, origin: origin, topLevelOrigin: origin, spaceName: "Work") {
+            answers.append($0)
+        }
+        controller.detachHost(quickWindow)
+        controller.attachHost(mainWindow)
+        drainMainQueue()
+        XCTAssertNotNil(controller.current)
+        XCTAssertTrue(answers.isEmpty)
+    }
+
+    /// Lets work the controller deferred to the next main turn run.
+    private func drainMainQueue() {
+        let drained = expectation(description: "main queue drained")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 1)
     }
 
     /// Answering the first of two queued requests answers only it; the next
