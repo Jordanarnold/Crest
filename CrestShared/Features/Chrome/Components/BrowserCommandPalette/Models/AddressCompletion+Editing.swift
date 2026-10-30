@@ -22,14 +22,30 @@ extension AddressCompletion {
     /// the rest of its suffix when `text` types further into that suffix, or
     /// nil when `text` leaves it or types all of it. The field keeps showing
     /// it while the core ranks the new text, so a keystroke that still
-    /// matches never blanks it.
+    /// matches never blanks it. As the core matches, the scheme and host
+    /// match in any case and the path only exactly.
     func continued(to text: String) -> AddressCompletion? {
         if text == typed { return self }
         guard text.hasPrefix(typed) else { return nil }
-        let added = String(text.dropFirst(typed.count))
-        guard let typedSuffix = suffix.range(of: added, options: [.anchored, .caseInsensitive]),
-            typedSuffix.upperBound < suffix.endIndex
-        else { return nil }
-        return AddressCompletion(typed: text, suffix: String(suffix[typedSuffix.upperBound...]), accepted: accepted)
+        let completed = Array(completedQuery)
+        let added = Array(text.dropFirst(typed.count))
+        let start = typed.count
+        guard start + added.count < completed.count else { return nil }
+        let pathStart = pathStart(of: completed)
+        for (offset, character) in added.enumerated() {
+            let position = start + offset
+            let expected = completed[position]
+            let matches = position < pathStart ? character.lowercased() == expected.lowercased() : character == expected
+            guard matches else { return nil }
+        }
+        return AddressCompletion(typed: text, suffix: String(suffix.dropFirst(added.count)), accepted: accepted)
+    }
+
+    /// Where the path begins in `address`: its first `/` after an `http://`
+    /// or `https://` it starts with, or its end when it has none.
+    private func pathStart(of address: [Character]) -> Int {
+        let scheme = ["https://", "http://"].first { String(address.prefix($0.count)).lowercased() == $0 }
+        let host = scheme?.count ?? 0
+        return address[host...].firstIndex(of: "/") ?? address.count
     }
 }

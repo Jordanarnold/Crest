@@ -43,7 +43,8 @@ final class BrowserCommandPaletteCompletionTests: XCTestCase {
     }
 
     func testCompletionStaysWhileTypingIntoItUntilTheCoreAnswers() async {
-        let tab = TabState.Seed(title: "Example", url: URL(string: "https://example.com/path"), placement: .current)
+        let tab = TabState.Seed(
+            title: "Example", url: URL(string: "https://example.com/Path/page"), placement: .current)
         let space = makeSpace(tab)
         let browser = BrowserStore(
             seed: SessionState.Seed(spaces: [space]), showing: space.id, tabs: [space.id: tab.id])
@@ -69,6 +70,15 @@ final class BrowserCommandPaletteCompletionTests: XCTestCase {
         type("exaMx")
         XCTAssertNil(model.urlCompletion)
         await model.waitForPendingResults()
+        XCTAssertNil(model.urlCompletion)
+
+        // The path matches only in its own case, as the core matches it.
+        type("example.com/P")
+        await model.waitForPendingResults()
+        XCTAssertEqual(model.urlCompletion?.suffix, "ath/")
+        type("example.com/Pa")
+        XCTAssertEqual(model.urlCompletion?.suffix, "th/")
+        type("example.com/PaT")
         XCTAssertNil(model.urlCompletion)
     }
 
