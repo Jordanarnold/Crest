@@ -4593,6 +4593,10 @@
     "new-tab-text-follows-space-switch": {
       "category": "fixed",
       "message": "Switching Spaces while typing in a new tab keeps what you typed, so it opens in the Space you switched to."
+    },
+    "new-tab-narrowing-follows-space-switch": {
+      "category": "internal",
+      "message": "A new tab palette narrowed to a search provider or scope stays narrowed when the window switches Spaces, along with what was typed."
     }
   }
 }

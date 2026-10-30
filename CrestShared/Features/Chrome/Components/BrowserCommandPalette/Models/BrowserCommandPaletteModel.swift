@@ -2,6 +2,19 @@ import Foundation
 import Observation
 import SwiftUI
 
+// MARK: - Types
+
+/// What the person has entered in a palette so far: the text, and the search
+/// provider or kind of result they narrowed it to, which a palette opened
+/// again for another Space starts from.
+struct BrowserCommandPaletteDraft: Equatable {
+    static let empty = BrowserCommandPaletteDraft(query: "", provider: nil, scope: nil)
+
+    let query: String
+    let provider: SearchProvider?
+    let scope: PaletteScope?
+}
+
 /// The shared palette's rows, keyboard selection and the search provider or
 /// scope a person narrowed it to. The core ranks what the palette offers for each
 /// query, off the main thread; an answer that arrives after a newer keystroke
@@ -143,6 +156,12 @@ final class BrowserCommandPaletteModel {
         return opening(for: items[selectedResultIndex].row)
     }
 
+    /// What the person has entered so far: the text, and the provider or
+    /// scope they narrowed to.
+    var draft: BrowserCommandPaletteDraft {
+        BrowserCommandPaletteDraft(query: query, provider: activeProvider, scope: activeScope)
+    }
+
     private var isUnscoped: Bool { activeProvider == nil && activeScope == nil }
 
     private var availableSourceAssignment: BrowserTabRuntimeAssignment? {
@@ -163,6 +182,8 @@ final class BrowserCommandPaletteModel {
         selectedTabID: UUID?,
         initialQuery: String,
         typesAfterInitialQuery: Bool = false,
+        initialProvider: SearchProvider? = nil,
+        initialScope: PaletteScope? = nil,
         commands: BrowserCommandPaletteCommandRegistry?,
         offersRestingCommands: Bool = true,
         suggestionDebounce: Duration = .milliseconds(250),
@@ -183,6 +204,9 @@ final class BrowserCommandPaletteModel {
         self.commands = commands
         self.offersRestingCommands = offersRestingCommands
         query = initialQuery
+        // A palette carried from another Space stays narrowed as it was.
+        activeProvider = initialProvider
+        activeScope = initialProvider == nil ? initialScope : nil
         self.suggestionDebounce = suggestionDebounce
         self.fetchSuggestions = fetchSuggestions
         isSourceAvailableAction = isSourceAvailable
